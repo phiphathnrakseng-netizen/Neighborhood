@@ -335,39 +335,7 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
-
-        let reviews = [
-            {
-                id: 1,
-                dormName: "The Park Ladprao 15",
-                location: "ลาดพร้าว 15",
-                author: "nant@example.com",
-                date: "เมื่อวานนี้",
-                title: "ซอยเปลี่ยวตอนดึก มีวินหน้าปากซอยช่วยชีวิต",
-                content: "ห้องตรงปกตามรูป แต่รอบนอกช่วงหลังเที่ยงคืนซอยค่อนข้างมืดและเปลี่ยว ร้านค้าปิดหมด มีแค่เซเว่นหน้าปากซอย ห้องเก็บเสียงค่อนข้างดี ไม่ค่อยได้ยินห้องข้างๆ",
-                scores: { quiet: 4, safe: 3, food: 4, flood: 3 },
-                overallRating: 3.8,
-                likes: 24,
-                category: "safe",
-                comments: [
-                    { author: "thana@example.com", text: "ดึกๆ หมาจรจัดแถวนั้นเยอะด้วยครับ ต้องระวัง", date: "10 ชม. ที่แล้ว" }
-                ]
-            },
-            {
-                id: 2,
-                dormName: "Ideo Mobi Asoke",
-                location: "อโศก-เพชรบุรี",
-                author: "thana@example.com",
-                date: "3 วันที่แล้ว",
-                title: "ของกินอุดมสมบูรณ์ แต่เสียงรถไฟฟ้าดังนิดหน่อย",
-                content: "รอบมหา'ลัยของกินอร่อย เดินทางสะดวกสุดๆ แต่ฝั่งติดถนนใหญ่จะได้ยินเสียงรถไฟฟ้าและรถติดช่วงเร่งด่วน น้ำระบายไว ฝนตกหนักไม่ขังนาน",
-                scores: { quiet: 2, safe: 5, food: 5, flood: 4 },
-                overallRating: 4.0,
-                likes: 52,
-                category: "food",
-                comments: []
-            }
-        ];
+        let reviews = []; // เปลี่ยนมารับข้อมูลจริงจาก Supabase Database
 
         let currentFilter = 'all';
         let searchQuery = '';
@@ -395,8 +363,44 @@
                 document.getElementById('darkModeStatusText').innerText = 'เปิด';
             }
 
-            renderReviews();
+            // [สำคัญ] ดึงข้อมูลจากฐานข้อมูล Supabase มาแสดงผล
+            fetchReviews();
         });
+
+        // ฟังก์ชันดึงข้อมูลรีวิวทั้งหมดจาก Supabase Database
+        async function fetchReviews() {
+            const { data, error } = await _supabase
+                .from('reviews')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching reviews:', error);
+                return;
+            }
+
+            // แปลงชื่อคอลัมน์ให้ตรงกับหน้าเว็บ
+            reviews = data.map(item => ({
+                id: item.id,
+                dormName: item.dorm_name,
+                location: item.location,
+                author: item.author,
+                date: new Date(item.created_at).toLocaleDateString('th-TH'),
+                title: item.title,
+                content: item.content,
+                scores: {
+                    quiet: item.score_quiet,
+                    safe: item.score_safe,
+                    food: item.score_food,
+                    flood: item.score_flood
+                },
+                overallRating: Number(item.overall_rating),
+                likes: item.likes,
+                comments: []
+            }));
+
+            renderReviews();
+        }
 
         function updateAuthUI() {
             const guestBtns = document.getElementById('authGuestButtons');
@@ -606,7 +610,7 @@
             renderReviews();
         }
 
-        function likeReview(id) {
+        async function likeReview(id) {
             if (!currentUser) {
                 showToast('กรุณาเข้าสู่ระบบก่อนกดถูกใจ');
                 openLoginModal();
@@ -614,7 +618,18 @@
             }
             const rev = reviews.find(r => r.id === id);
             if (rev) {
-                rev.likes++;
+                const newLikes = rev.likes + 1;
+                const { error } = await _supabase
+                    .from('reviews')
+                    .update({ likes: newLikes })
+                    .eq('id', id);
+
+                if (error) {
+                    showToast('เกิดข้อผิดพลาดในการกดถูกใจ');
+                    return;
+                }
+
+                rev.likes = newLikes;
                 showToast('บันทึกถูกใจแล้ว');
                 openDetailView(id);
             }
@@ -752,39 +767,55 @@
             setTimeout(() => modal.classList.add('hidden'), 200);
         }
 
-        function submitReview(e) {
+        // SUPABASE: บันทึกรีวิวลงฐานข้อมูลจริง
+        async function submitReview(e) {
             e.preventDefault();
-            const dormName = document.getElementById('formDormName').value;
+            if (!currentUser) {
+                showToast('กรุณาเข้าสู่ระบบก่อนเขียนรีวิว');
+                return;
+            }
+
+            const dorm_name = document.getElementById('formDormName').value;
             const location = document.getElementById('formLocation').value;
             const title = document.getElementById('formTitle').value;
             const content = document.getElementById('formContent').value;
             
-            const quiet = parseInt(document.getElementById('formQuiet').value);
-            const safe = parseInt(document.getElementById('formSafe').value);
-            const food = parseInt(document.getElementById('formFood').value);
-            const flood = parseInt(document.getElementById('formFlood').value);
+            const score_quiet = parseInt(document.getElementById('formQuiet').value);
+            const score_safe = parseInt(document.getElementById('formSafe').value);
+            const score_food = parseInt(document.getElementById('formFood').value);
+            const score_flood = parseInt(document.getElementById('formFlood').value);
 
-            const overallRating = Number(((quiet + safe + food + flood) / 4).toFixed(1));
+            const overall_rating = Number(((score_quiet + score_safe + score_food + score_flood) / 4).toFixed(1));
 
-            reviews.unshift({
-                id: reviews.length + 1,
-                dormName,
-                location,
-                author: currentUser,
-                date: "เมื่อสักครู่",
-                title,
-                content,
-                scores: { quiet, safe, food, flood },
-                overallRating,
-                likes: 0,
-                category: safe < 3 ? 'safe' : (quiet < 3 ? 'quiet' : 'food'),
-                comments: []
-            });
+            const { error } = await _supabase
+                .from('reviews')
+                .insert([
+                    {
+                        dorm_name,
+                        location,
+                        author: currentUser,
+                        title,
+                        content,
+                        score_quiet,
+                        score_safe,
+                        score_food,
+                        score_flood,
+                        overall_rating,
+                        likes: 0
+                    }
+                ]);
+
+            if (error) {
+                showToast('เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
+                return;
+            }
 
             closeWriteModal();
             document.getElementById('reviewForm').reset();
-            renderReviews();
             showToast('โพสต์รีวิวเรียบร้อย');
+            
+            // โหลดข้อมูลรีวิวใหม่ล่าสุดจากฐานข้อมูลมาแสดงทันที
+            fetchReviews();
         }
 
         function showToast(message) {
