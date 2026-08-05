@@ -1,814 +1,168 @@
 <!DOCTYPE html>
-<html lang="th" class="scroll-smooth">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neighborhood - เสียงจริงจากคนอยู่จริง</title>
-    <!-- Tailwind CSS CDN -->
+    <title>ระบบสมัครสมาชิกและเข้าสู่ระบบ - Neighborhood</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap');
-    </style>
-    
     <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+        <h2 id="form-title" class="text-2xl font-bold mb-6 text-center text-slate-800">เข้าสู่ระบบ</h2>
+
+        <!-- Alert Box สำหรับแสดงข้อความแจ้งเตือน -->
+        <div id="alert-box" class="hidden mb-4 p-3 rounded-lg text-sm text-center"></div>
+
+        <!-- ฟอร์มสำหรับ Login / Register -->
+        <form id="auth-form" onsubmit="handleSubmit(event)" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">อีเมล (Email)</label>
+                <input type="email" id="email" required 
+                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="example@email.com">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน (Password)</label>
+                <input type="password" id="password" required 
+                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="อย่างน้อย 6 ตัวขึ้นไป">
+            </div>
+
+            <button type="submit" id="submit-btn" 
+                class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+                เข้าสู่ระบบ
+            </button>
+        </form>
+
+        <!-- สลับโหมด Login / Register -->
+        <div class="mt-6 text-center text-sm text-slate-600">
+            <span id="switch-text">ยังไม่มีบัญชีใช่ไหม?</span>
+            <button onclick="toggleMode()" id="switch-btn" class="text-blue-600 font-medium hover:underline ml-1">
+                สมัครสมาชิก
+            </button>
+        </div>
+    </div>
+
+    <!-- ส่วน Dashboard หลังเข้าสู่ระบบสำเร็จ (ซ่อนไว้ก่อน) -->
+    <div id="dashboard-container" class="hidden fixed inset-0 bg-slate-100 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-lg text-center">
+            <h1 class="text-3xl font-bold text-slate-800 mb-4">ยินดีต้อนรับสู่ระบบ! 🎉</h1>
+            <p id="user-display-email" class="text-slate-600 mb-6"></p>
+            <button onclick="handleLogout()" 
+                class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition font-medium">
+                ออกจากระบบ
+            </button>
+        </div>
+    </div>
 
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        eng: ['"Michroma"', 'sans-serif'],
-                        thai: ['"Sarabun"', '"TH Sarabun PSK"', 'sans-serif'],
+        // ตั้งค่าการเชื่อมต่อ Supabase ของคุณ
+        const SUPABASE_URL = 'https://znpjitnfdbufismuwetsp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpucGppdG5mZGJ1ZmlzbXV3ZXRzcCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzczNzA5MTc5LCJleHAiOjIwODkyNjkxNzl9.Ym2_O1K3M8d8iR9881881881881881881881881881881'; 
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let isLoginMode = true; // สถานะเริ่มต้นเป็นหน้าเข้าสู่ระบบ
+
+        // ฟังก์ชันสลับโหมดระหว่าง เข้าสู่ระบบ และ สมัครสมาชิก
+        function toggleMode() {
+            isLoginMode = !isLoginMode;
+            const formTitle = document.getElementById('form-title');
+            const submitBtn = document.getElementById('submit-btn');
+            const switchText = document.getElementById('switch-text');
+            const switchBtn = document.getElementById('switch-btn');
+            const alertBox = document.getElementById('alert-box');
+            
+            alertBox.classList.add('hidden'); // ซ่อนแจ้งเตือนเมื่อเปลี่ยนโหมด
+
+            if (isLoginMode) {
+                formTitle.innerText = 'เข้าสู่ระบบ';
+                submitBtn.innerText = 'เข้าสู่ระบบ';
+                switchText.innerText = 'ยังไม่มีบัญชีใช่ไหม?';
+                switchBtn.innerText = 'สมัครสมาชิก';
+            } else {
+                formTitle.innerText = 'สมัครสมาชิก';
+                submitBtn.innerText = 'ยืนยันการสมัคร';
+                switchText.innerText = 'มีบัญชีอยู่แล้วใช่ไหม?';
+                switchBtn.innerText = 'เข้าสู่ระบบ';
+            }
+        }
+
+        // ฟังก์ชันแสดงกล่องข้อความแจ้งเตือน
+        function showAlert(message, isSuccess = false) {
+            const alertBox = document.getElementById('alert-box');
+            alertBox.innerText = message;
+            alertBox.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+            if (isSuccess) {
+                alertBox.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                alertBox.classList.add('bg-red-100', 'text-red-700');
+            }
+        }
+
+        // ฟังก์ชันจัดการเมื่อกด Submit ฟอร์ม
+        async function handleSubmit(event) {
+            event.preventDefault();
+            const emailInput = document.getElementById('email').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
+
+            if (isLoginMode) {
+                // 1. ระบบเข้าสู่ระบบ (Login) ผ่าน Supabase Auth
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: emailInput,
+                        password: passwordInput,
+                    });
+
+                    if (error) {
+                        showAlert('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+                    } else {
+                        showAlert('เข้าสู่ระบบสำเร็จ!', true);
+                        setTimeout(() => {
+                            showDashboard(data.user.email);
+                        }, 1000);
                     }
+                } catch (err) {
+                    console.error(err);
+                    showAlert('เกิดข้อผิดพลาดในการเชื่อมต่อระบบ');
+                }
+            } else {
+                // 2. ระบบสมัครสมาชิก (Register) ผ่าน Supabase Auth
+                try {
+                    const { data, error } = await supabase.auth.signUp({
+                        email: emailInput,
+                        password: passwordInput,
+                    });
+
+                    if (error) {
+                        console.error(error);
+                        showAlert('สมัครไม่สำเร็จ: ' + error.message);
+                    } else {
+                        showAlert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ', true);
+                        setTimeout(() => toggleMode(), 1500); // สลับกลับไปหน้า Login อัตโนมัติ
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showAlert('เกิดข้อผิดพลาดในการสมัครสมาชิก');
                 }
             }
         }
-    </script>
-    <style>
-        body {
-            font-family: 'Sarabun', 'TH Sarabun PSK', sans-serif;
-            font-weight: 300;
-        }
-        .logo-text {
-            font-family: 'Michroma', sans-serif;
-            letter-spacing: -0.05em;
-        }
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(150, 150, 150, 0.2);
-            border-radius: 3px;
-        }
-    </style>
-</head>
-<body class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 antialiased transition-colors duration-200">
 
-    <!-- TOP NAVIGATION BAR -->
-    <header class="sticky top-0 z-40 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-200">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-3 cursor-pointer" onclick="resetView()">
-                <span class="logo-text text-xl font-bold tracking-wider text-zinc-900 dark:text-white">Neighborhood</span>
-            </div>
-
-            <div class="hidden md:flex items-center flex-1 max-w-sm mx-8">
-                <div class="relative w-full">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-zinc-400">
-                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                    </span>
-                    <input type="text" id="headerSearchInput" oninput="handleSearch(this.value)" placeholder="ค้นหาหอพัก, ย่าน, มหาวิทยาลัย..." class="w-full pl-10 pr-4 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100 transition-all">
-                </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <button onclick="openWriteModal()" class="hidden sm:inline-flex items-center gap-2 px-5 py-2 rounded-full bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-normal text-sm transition-all">
-                    <i class="fa-solid fa-plus text-xs"></i>
-                    <span>เขียนรีวิว</span>
-                </button>
-
-                <!-- Guest State -->
-                <div id="authGuestButtons" class="flex items-center gap-3">
-                    <button onclick="openLoginModal()" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors font-normal">
-                        เข้าสู่ระบบ
-                    </button>
-                    <button onclick="openRegisterModal()" class="px-4 py-2 rounded-full border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all">
-                        สมัครสมาชิก
-                    </button>
-                </div>
-
-                <!-- Logged In State -->
-                <div id="authUserMenu" class="relative hidden">
-                    <button onclick="toggleUserDropdown()" class="flex items-center gap-2 p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors">
-                        <div class="w-8 h-8 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center text-xs font-bold" id="userAvatarText">U</div>
-                        <i class="fa-solid fa-gear text-xs text-zinc-500 px-1"></i>
-                    </button>
-
-                    <div id="userDropdown" class="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl py-2 hidden z-50">
-                        <div class="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800">
-                            <p class="text-xs text-zinc-400">เข้าสู่ระบบในชื่อ</p>
-                            <p id="dropdownUserName" class="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">Username</p>
-                        </div>
-                        <button onclick="openAccountSettings()" class="w-full text-left px-4 py-2.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2">
-                            <i class="fa-solid fa-user-gear"></i> ตั้งค่าบัญชี
-                        </button>
-                        <button onclick="toggleDarkMode()" class="w-full text-left px-4 py-2.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-between">
-                            <span class="flex items-center gap-2"><i class="fa-solid fa-moon"></i> โหมดมืด</span>
-                            <span id="darkModeStatusText" class="text-[10px] text-zinc-400">ปิด</span>
-                        </button>
-                        <div class="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
-                        <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2">
-                            <i class="fa-solid fa-arrow-right-from-bracket"></i> ออกจากระบบ
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- MAIN CONTAINER -->
-    <main class="max-w-7xl mx-auto px-6 py-10">
-
-        <!-- HERO SECTION -->
-        <section id="heroSection" class="mb-16 text-center py-16 px-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 relative overflow-hidden transition-colors">
-            <div class="max-w-2xl mx-auto">
-                <h1 class="text-3xl sm:text-4xl font-normal tracking-tight mb-4 text-zinc-900 dark:text-white">
-                    สภาพแวดล้อมจริง รอบที่พักอาศัย
-                </h1>
-                <p class="text-zinc-500 dark:text-zinc-400 text-base mb-8 font-light">
-                    เสียงรบกวนยามค่ำคืน ความปลอดภัย และบรรยากาศรอบหอพักจากผู้เช่าตัวจริง
-                </p>
-
-                <div class="bg-white dark:bg-zinc-900 p-2 rounded-full max-w-xl mx-auto flex items-center gap-2 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors">
-                    <div class="relative flex-1 pl-4">
-                        <input type="text" id="heroSearchInput" oninput="handleSearch(this.value)" placeholder="พิมพ์ชื่อย่าน หรือหอพักที่ต้องการเช็ค..." class="w-full py-2.5 bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 text-sm focus:outline-none">
-                    </div>
-                    <button onclick="triggerSearchAction()" class="px-6 py-2.5 rounded-full bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-sm transition-all">
-                        ค้นหา
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- CATEGORY FILTER PILLS -->
-        <section class="mb-10">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-sm font-normal text-zinc-500 dark:text-zinc-400 tracking-wide uppercase">กรองตามหัวข้อ</h2>
-                <span id="activeFilterLabel" class="text-xs text-zinc-900 dark:text-zinc-100 font-normal border-b border-zinc-900 dark:border-zinc-100 pb-0.5">ทั้งหมด</span>
-            </div>
-            <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                <button onclick="filterCategory('all')" class="cat-btn active flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 whitespace-nowrap">ทั้งหมด</button>
-                <button onclick="filterCategory('quiet')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">เงียบสงบ</button>
-                <button onclick="filterCategory('safe')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">ปลอดภัยยามค่ำคืน</button>
-                <button onclick="filterCategory('food')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">ของกินเพียบ</button>
-                <button onclick="filterCategory('flood')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">ไม่น้ำท่วมขัง</button>
-            </div>
-        </section>
-
-        <!-- DYNAMIC CONTENT AREA -->
-        <div id="mainContentArea">
-            <div id="reviewsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-            
-            <div id="emptyState" class="hidden text-center py-20">
-                <h3 class="text-base font-normal text-zinc-900 dark:text-white mb-1">ไม่พบข้อมูลรีวิว</h3>
-                <p class="text-sm text-zinc-500 mb-6">ลองเปลี่ยนคำค้นหา หรือเขียนรีวิวแชร์ข้อมูลเป็นคนแรก</p>
-                <button onclick="openWriteModal()" class="px-5 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-full text-sm">เขียนรีวิว</button>
-            </div>
-        </div>
-
-        <div id="detailViewContainer" class="hidden"></div>
-
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 mt-24 py-10 transition-colors">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span class="logo-text text-sm font-bold text-zinc-900 dark:text-white">Neighborhood</span>
-            <p class="text-xs text-zinc-400">© 2026 Neighborhood Platform. All rights reserved.</p>
-        </div>
-    </footer>
-
-    <!-- MODAL: LOGIN -->
-    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs hidden transition-opacity opacity-0 pointer-events-none">
-        <div class="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 p-6 relative">
-            <button onclick="closeLoginModal()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
-                <i class="fa-solid fa-xmark text-xs"></i>
-            </button>
-            <div class="text-center mb-6">
-                <h3 class="text-base font-normal text-zinc-900 dark:text-white">เข้าสู่ระบบ</h3>
-                <p class="text-xs text-zinc-500 mt-1">Neighborhood Platform</p>
-            </div>
-            <form onsubmit="handleLogin(event)" class="space-y-3">
-                <div>
-                    <label class="block text-xs text-zinc-500 mb-1">ชื่อผู้ใช้งาน</label>
-                    <input type="text" id="loginUsername" required placeholder="กรอกชื่อผู้ใช้ของคุณ" class="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
-                </div>
-                <div>
-                    <label class="block text-xs text-zinc-500 mb-1">รหัสผ่าน</label>
-                    <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
-                </div>
-                <div class="flex items-center justify-between text-xs pt-1">
-                    <label class="flex items-center gap-2 cursor-pointer text-zinc-500">
-                        <input type="checkbox" id="rememberMe" class="accent-zinc-900 rounded"> จดจำข้อมูลผู้ใช้
-                    </label>
-                </div>
-                <button type="submit" class="w-full py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-sm mt-2 transition-all">เข้าสู่ระบบ</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: REGISTER -->
-    <div id="registerModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs hidden transition-opacity opacity-0 pointer-events-none">
-        <div class="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 p-6 relative">
-            <button onclick="closeRegisterModal()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
-                <i class="fa-solid fa-xmark text-xs"></i>
-            </button>
-            <div class="text-center mb-6">
-                <h3 class="text-base font-normal text-zinc-900 dark:text-white">สมัครสมาชิก</h3>
-                <p class="text-xs text-zinc-500 mt-1">ใช้ชื่อและรหัสผ่านเพื่อเริ่มต้นใช้งาน</p>
-            </div>
-            <form onsubmit="handleRegister(event)" class="space-y-3">
-                <div>
-                    <label class="block text-xs text-zinc-500 mb-1">ชื่อผู้ใช้งาน</label>
-                    <input type="text" id="regUsername" required placeholder="ตั้งชื่อผู้ใช้ของคุณ" class="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
-                </div>
-                <div>
-                    <label class="block text-xs text-zinc-500 mb-1">รหัสผ่าน</label>
-                    <input type="password" id="regPassword" required placeholder="••••••••" class="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
-                </div>
-                <button type="submit" class="w-full py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-sm mt-2 transition-all">สมัครสมาชิก</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: ACCOUNT SETTINGS -->
-    <div id="accountModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs hidden transition-opacity opacity-0 pointer-events-none">
-        <div class="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 p-6 relative">
-            <button onclick="closeAccountSettings()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
-                <i class="fa-solid fa-xmark text-xs"></i>
-            </button>
-            <div class="text-center mb-6">
-                <h3 class="text-base font-normal text-zinc-900 dark:text-white">ตั้งค่าบัญชี</h3>
-                <p class="text-xs text-zinc-500 mt-1">ข้อมูลบัญชีผู้ใช้งานของคุณ</p>
-            </div>
-            <div class="space-y-4 text-xs">
-                <div>
-                    <span class="text-zinc-400 block mb-1">ชื่อผู้ใช้งานปัจจุบัน</span>
-                    <p id="accountNameDisplay" class="font-medium text-zinc-900 dark:text-zinc-100 p-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700"></p>
-                </div>
-                <button onclick="closeAccountSettings()" class="w-full py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs">ปิด</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: WRITE REVIEW -->
-    <div id="writeModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs hidden transition-opacity opacity-0 pointer-events-none">
-        <div class="bg-white dark:bg-zinc-900 w-full max-w-xl rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-200" id="writeModalCard">
-            <div class="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-                <h3 class="font-normal text-zinc-900 dark:text-white text-base">เขียนรีวิวสภาพแวดล้อม</h3>
-                <button onclick="closeWriteModal()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 flex items-center justify-center text-zinc-500 transition-colors">
-                    <i class="fa-solid fa-xmark text-xs"></i>
-                </button>
-            </div>
-            <div class="p-6 overflow-y-auto space-y-4 flex-1">
-                <form id="reviewForm" onsubmit="submitReview(event)" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs text-zinc-500 mb-1">ชื่อหอพัก / คอนโด *</label>
-                            <input type="text" id="formDormName" required placeholder="เช่น บ้านสวนเรสซิเดนซ์" class="w-full px-4 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-zinc-500 mb-1">ย่าน / มหาวิทยาลัย *</label>
-                            <input type="text" id="formLocation" required placeholder="เช่น ซอยลาดพร้าว 15" class="w-full px-4 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
-                        </div>
-                    </div>
-
-                    <div class="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-3">
-                        <h4 class="text-xs text-zinc-500 uppercase tracking-wider">ให้คะแนนเฉพาะด้าน (1 - 5)</h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <div class="flex justify-between text-xs text-zinc-600 dark:text-zinc-400 mb-1">
-                                    <span>ความเงียบสงบ</span>
-                                    <span id="valQuiet" class="font-normal text-zinc-900 dark:text-white">4</span>
-                                </div>
-                                <input type="range" id="formQuiet" min="1" max="5" value="4" oninput="document.getElementById('valQuiet').innerText = this.value" class="w-full accent-zinc-900 dark:accent-zinc-100 cursor-pointer">
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs text-zinc-600 dark:text-zinc-400 mb-1">
-                                    <span>ความปลอดภัยยามค่ำคืน</span>
-                                    <span id="valSafe" class="font-normal text-zinc-900 dark:text-white">4</span>
-                                </div>
-                                <input type="range" id="formSafe" min="1" max="5" value="4" oninput="document.getElementById('valSafe').innerText = this.value" class="w-full accent-zinc-900 dark:accent-zinc-100 cursor-pointer">
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs text-zinc-600 dark:text-zinc-400 mb-1">
-                                    <span>ร้านอาหารของกิน</span>
-                                    <span id="valFood" class="font-normal text-zinc-900 dark:text-white">5</span>
-                                </div>
-                                <input type="range" id="formFood" min="1" max="5" value="5" oninput="document.getElementById('valFood').innerText = this.value" class="w-full accent-zinc-900 dark:accent-zinc-100 cursor-pointer">
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-xs text-zinc-600 dark:text-zinc-400 mb-1">
-                                    <span>สถานการณ์น้ำท่วม</span>
-                                    <span id="valFlood" class="font-normal text-zinc-900 dark:text-white">3</span>
-                                </div>
-                                <input type="range" id="formFlood" min="1" max="5" value="3" oninput="document.getElementById('valFlood').innerText = this.value" class="w-full accent-zinc-900 dark:accent-zinc-100 cursor-pointer">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs text-zinc-500 mb-1">หัวข้อรีวิว *</label>
-                        <input type="text" id="formTitle" required placeholder="เช่น ซอยเปลี่ยวตอนดึก แต่ของกินอร่อยมาก" class="w-full px-4 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs text-zinc-500 mb-1">รายละเอียดสภาพแวดล้อม *</label>
-                        <textarea id="formContent" rows="3" required placeholder="เล่าเรื่องเสียงรบกวน ความสว่างของไฟในซอย ปัญหาน้ำท่วม..." class="w-full px-4 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100"></textarea>
-                    </div>
-
-                    <div class="pt-2 flex items-center justify-end gap-3">
-                        <button type="button" onclick="closeWriteModal()" class="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs">ยกเลิก</button>
-                        <button type="submit" class="px-5 py-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs">โพสต์รีวิว</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- TOAST NOTIFICATION -->
-    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-200 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs shadow-lg">
-        <i class="fa-solid fa-check text-xs"></i>
-        <span id="toastMessage">สำเร็จ</span>
-    </div>
-
-    <!-- JAVASCRIPT APPLICATION LOGIC -->
-    <script>
-        // เชื่อมต่อ Supabase
-        const SUPABASE_URL = 'https://znpjtnfdbufismuwetsp.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_X-h6wtFrGpuHWif1v5xMHw_ewkgeSNg';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        let currentUser = null;
-
-        let reviews = [
-            {
-                id: 1,
-                dormName: "The Park Ladprao 15",
-                location: "ลาดพร้าว 15",
-                author: "คุณนัน",
-                date: "เมื่อวานนี้",
-                title: "ซอยเปลี่ยวตอนดึก มีวินหน้าปากซอยช่วยชีวิต",
-                content: "ห้องตรงปกตามรูป แต่รอบนอกช่วงหลังเที่ยงคืนซอยค่อนข้างมืดและเปลี่ยว ร้านค้าปิดหมด มีแค่เซเว่นหน้าปากซอย ห้องเก็บเสียงค่อนข้างดี ไม่ค่อยได้ยินห้องข้างๆ",
-                scores: { quiet: 4, safe: 3, food: 4, flood: 3 },
-                overallRating: 3.8,
-                likes: 24,
-                category: "safe",
-                comments: [
-                    { author: "คุณธนา", text: "ดึกๆ หมาจรจัดแถวนั้นเยอะด้วยครับ ต้องระวัง", date: "10 ชม. ที่แล้ว" }
-                ]
-            },
-            {
-                id: 2,
-                dormName: "Ideo Mobi Asoke",
-                location: "อโศก-เพชรบุรี",
-                author: "คุณธนา",
-                date: "3 วันที่แล้ว",
-                title: "ของกินอุดมสมบูรณ์ แต่เสียงรถไฟฟ้าดังนิดหน่อย",
-                content: "รอบมหา'ลัยของกินอร่อย เดินทางสะดวกสุดๆ แต่ฝั่งติดถนนใหญ่จะได้ยินเสียงรถไฟฟ้าและรถติดช่วงเร่งด่วน น้ำระบายไว ฝนตกหนักไม่ขังนาน",
-                scores: { quiet: 2, safe: 5, food: 5, flood: 4 },
-                overallRating: 4.0,
-                likes: 52,
-                category: "food",
-                comments: []
-            }
-        ];
-
-        let currentFilter = 'all';
-        let searchQuery = '';
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('neighborhood_current_user');
-            if (savedUser) {
-                currentUser = savedUser;
-                updateAuthUI();
-            }
-            
-            if (localStorage.getItem('neighborhood_dark') === 'true') {
-                document.documentElement.classList.add('dark');
-                document.getElementById('darkModeStatusText').innerText = 'เปิด';
-            }
-
-            renderReviews();
-        });
-
-        function updateAuthUI() {
-            const guestBtns = document.getElementById('authGuestButtons');
-            const userMenu = document.getElementById('authUserMenu');
-            if (currentUser) {
-                guestBtns.classList.add('hidden');
-                userMenu.classList.remove('hidden');
-                document.getElementById('userAvatarText').innerText = currentUser.charAt(0).toUpperCase();
-                document.getElementById('dropdownUserName').innerText = currentUser;
-                document.getElementById('accountNameDisplay').innerText = currentUser;
-            } else {
-                guestBtns.classList.remove('hidden');
-                userMenu.classList.add('hidden');
-            }
+        // ฟังก์ชันแสดงหน้า Dashboard หลังจากล็อกอินสำเร็จ
+        function showDashboard(email) {
+            document.querySelector('.bg-white.p-8').parentElement.classList.add('hidden'); // ซ่อนฟอร์มล็อกอิน
+            document.getElementById('dashboard-container').classList.remove('hidden'); // แสดงหน้าแดชบอร์ด
+            document.getElementById('user-display-email').innerText = 'เข้าสู่ระบบด้วยอีเมล: ' + email;
         }
 
-        function toggleUserDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('hidden');
-        }
-
-        window.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('userDropdown');
-            if (!dropdown.contains(e.target) && !e.target.closest('#authUserMenu')) {
-                dropdown.classList.add('hidden');
-            }
-        });
-
-        function toggleDarkMode() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('neighborhood_dark', isDark);
-            document.getElementById('darkModeStatusText').innerText = isDark ? 'เปิด' : 'ปิด';
-            showToast(isDark ? 'เปิดโหมดมืดแล้ว' : 'ปิดโหมดมืดแล้ว');
-        }
-
-        function renderReviews() {
-            const grid = document.getElementById('reviewsGrid');
-            const emptyState = document.getElementById('emptyState');
-            
-            let filtered = reviews.filter(rev => {
-                const matchesSearch = rev.dormName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                      rev.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                      rev.title.toLowerCase().includes(searchQuery.toLowerCase());
-                
-                if (currentFilter === 'all') return matchesSearch;
-                if (currentFilter === 'quiet') return matchesSearch && rev.scores.quiet >= 4;
-                if (currentFilter === 'safe') return matchesSearch && rev.scores.safe >= 4;
-                if (currentFilter === 'food') return matchesSearch && rev.scores.food >= 4;
-                if (currentFilter === 'flood') return matchesSearch && rev.scores.flood >= 4;
-                return matchesSearch;
-            });
-
-            if (filtered.length === 0) {
-                grid.innerHTML = '';
-                emptyState.classList.remove('hidden');
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-            grid.innerHTML = filtered.map(rev => `
-                <div onclick="openDetailView(${rev.id})" class="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all cursor-pointer flex flex-col justify-between group">
-                    <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-xs text-zinc-500">${rev.location}</span>
-                            <span class="text-xs text-zinc-900 dark:text-zinc-100 font-normal bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-full">★ ${rev.overallRating.toFixed(1)}</span>
-                        </div>
-                        <h3 class="font-normal text-zinc-900 dark:text-zinc-100 text-base mb-1 group-hover:underline">${rev.dormName}</h3>
-                        <p class="text-xs text-zinc-400 mb-3">${rev.date} • ${rev.author}</p>
-                        <h4 class="text-sm font-normal text-zinc-800 dark:text-zinc-200 mb-2 line-clamp-1">"${rev.title}"</h4>
-                        <p class="text-zinc-500 dark:text-zinc-400 text-xs line-clamp-3 mb-4 leading-relaxed">${rev.content}</p>
-                    </div>
-                    <div class="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500">
-                        <div class="flex items-center gap-3">
-                            <span>เงียบ ${rev.scores.quiet}/5</span>
-                            <span>ปลอดภัย ${rev.scores.safe}/5</span>
-                        </div>
-                        <span class="text-zinc-900 dark:text-zinc-100 flex items-center gap-1"><i class="fa-solid fa-heart text-red-500"></i> ${rev.likes}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function handleSearch(val) {
-            searchQuery = val;
-            document.getElementById('headerSearchInput').value = val;
-            const heroInput = document.getElementById('heroSearchInput');
-            if(heroInput) heroInput.value = val;
-            renderReviews();
-        }
-
-        function triggerSearchAction() {
-            const heroInput = document.getElementById('heroSearchInput').value;
-            handleSearch(heroInput);
-            document.getElementById('reviewsGrid').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function filterCategory(cat) {
-            currentFilter = cat;
-            document.querySelectorAll('.cat-btn').forEach(btn => {
-                btn.classList.remove('bg-zinc-900', 'dark:bg-zinc-100', 'text-white', 'dark:text-zinc-900');
-                btn.classList.add('bg-zinc-100', 'dark:bg-zinc-900', 'text-zinc-600', 'dark:text-zinc-400');
-            });
-            event.currentTarget.classList.remove('bg-zinc-100', 'dark:bg-zinc-900', 'text-zinc-600', 'dark:text-zinc-400');
-            event.currentTarget.classList.add('bg-zinc-900', 'dark:bg-zinc-100', 'text-white', 'dark:text-zinc-900');
-
-            const labels = {
-                'all': 'ทั้งหมด',
-                'quiet': 'เงียบสงบ',
-                'safe': 'ปลอดภัยยามค่ำคืน',
-                'food': 'ของกินเพียบ',
-                'flood': 'ไม่น้ำท่วมขัง'
-            };
-            document.getElementById('activeFilterLabel').innerText = labels[cat];
-            renderReviews();
-        }
-
-        function openDetailView(id) {
-            const rev = reviews.find(r => r.id === id);
-            if (!rev) return;
-
-            document.getElementById('heroSection').classList.add('hidden');
-            document.getElementById('reviewsGrid').parentElement.parentElement.querySelector('section:nth-of-type(2)').classList.add('hidden');
-            document.getElementById('reviewsGrid').parentElement.classList.add('hidden');
-            
-            const detailContainer = document.getElementById('detailViewContainer');
-            detailContainer.classList.remove('hidden');
-
-            detailContainer.innerHTML = `
-                <div class="mb-6">
-                    <button onclick="resetView()" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 text-xs transition-colors">
-                        <i class="fa-solid fa-arrow-left text-[10px]"></i> กลับหน้าหลัก
-                    </button>
-                </div>
-
-                <div class="bg-white dark:bg-zinc-900 rounded-2xl p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 mb-8 transition-colors">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-800">
-                        <div>
-                            <span class="text-xs text-zinc-500">${rev.location}</span>
-                            <h1 class="text-2xl font-normal text-zinc-900 dark:text-white mt-1">${rev.dormName}</h1>
-                            <p class="text-xs text-zinc-400 mt-1">รีวิวโดย ${rev.author} • ${rev.date}</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="text-center px-4 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
-                                <span class="block text-xl font-normal text-zinc-900 dark:text-white">${rev.overallRating.toFixed(1)}</span>
-                                <span class="text-[10px] text-zinc-400 uppercase">เฉลี่ย</span>
-                            </div>
-                            <button onclick="likeReview(${rev.id})" class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 text-xs transition-colors">
-                                <i class="fa-solid fa-heart text-red-500"></i> 
-                                <span>ถูกใจ (${rev.likes})</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 py-6 border-b border-zinc-200 dark:border-zinc-800 text-xs">
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                            <span class="text-zinc-500 block mb-1">ความเงียบสงบ</span>
-                            <span class="font-normal text-zinc-900 dark:text-white text-sm">${rev.scores.quiet}/5</span>
-                        </div>
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                            <span class="text-zinc-500 block mb-1">ความปลอดภัย</span>
-                            <span class="font-normal text-zinc-900 dark:text-white text-sm">${rev.scores.safe}/5</span>
-                        </div>
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                            <span class="text-zinc-500 block mb-1">ร้านอาหารของกิน</span>
-                            <span class="font-normal text-zinc-900 dark:text-white text-sm">${rev.scores.food}/5</span>
-                        </div>
-                        <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                            <span class="text-zinc-500 block mb-1">สถานการณ์น้ำท่วม</span>
-                            <span class="font-normal text-zinc-900 dark:text-white text-sm">${rev.scores.flood}/5</span>
-                        </div>
-                    </div>
-
-                    <div class="py-6 space-y-3">
-                        <h3 class="text-base font-normal text-zinc-900 dark:text-white">"${rev.title}"</h3>
-                        <p class="text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed whitespace-pre-line">${rev.content}</p>
-                    </div>
-
-                    <div class="pt-6 border-t border-zinc-200 dark:border-zinc-800">
-                        <h4 class="font-normal text-zinc-900 dark:text-white text-sm mb-4">ความคิดเห็นเสริม (${rev.comments.length})</h4>
-                        <div class="space-y-3 mb-6" id="commentList_${rev.id}">
-                            ${rev.comments.length === 0 ? '<p class="text-xs text-zinc-400">ยังไม่มีความคิดเห็นเสริม</p>' : 
-                                rev.comments.map(c => `
-                                    <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 text-xs">
-                                        <div class="flex justify-between items-center mb-1">
-                                            <span class="font-normal text-zinc-800 dark:text-zinc-200">${c.author}</span>
-                                            <span class="text-zinc-400">${c.date}</span>
-                                        </div>
-                                        <p class="text-zinc-600 dark:text-zinc-300">${c.text}</p>
-                                    </div>
-                                `).join('')}
-                        </div>
-                        <form onsubmit="submitComment(event, ${rev.id})" class="flex gap-2">
-                            <input type="text" id="commentInput_${rev.id}" required placeholder="${currentUser ? 'แสดงความคิดเห็นเพิ่มเติม...' : 'กรุณาเข้าสู่ระบบก่อนแสดงความคิดเห็น...'}" ${!currentUser ? 'disabled' : ''} class="flex-1 px-4 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100 disabled:opacity-50">
-                            <button type="submit" ${!currentUser ? 'disabled' : ''} class="px-4 py-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs disabled:opacity-50">ส่ง</button>
-                        </form>
-                    </div>
-                </div>
-            `;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function resetView() {
-            document.getElementById('heroSection').classList.remove('hidden');
-            document.getElementById('reviewsGrid').parentElement.parentElement.querySelector('section:nth-of-type(2)').classList.remove('hidden');
-            document.getElementById('reviewsGrid').parentElement.classList.remove('hidden');
-            document.getElementById('detailViewContainer').classList.add('hidden');
-            renderReviews();
-        }
-
-        function likeReview(id) {
-            if (!currentUser) {
-                showToast('กรุณาเข้าสู่ระบบก่อนกดถูกใจ');
-                openLoginModal();
-                return;
-            }
-            const rev = reviews.find(r => r.id === id);
-            if (rev) {
-                rev.likes++;
-                showToast('บันทึกถูกใจแล้ว');
-                openDetailView(id);
-            }
-        }
-
-        function submitComment(e, id) {
-            e.preventDefault();
-            if (!currentUser) {
-                showToast('กรุณาเข้าสู่ระบบก่อนแสดงความคิดเห็น');
-                openLoginModal();
-                return;
-            }
-            const input = document.getElementById(`commentInput_${id}`);
-            const text = input.value.trim();
-            if (!text) return;
-
-            const rev = reviews.find(r => r.id === id);
-            if (rev) {
-                rev.comments.push({ author: currentUser, text, date: "เมื่อสักครู่" });
-                input.value = '';
-                showToast('ส่งความคิดเห็นแล้ว');
-                openDetailView(id);
-            }
-        }
-
-        function openLoginModal() {
-            const modal = document.getElementById('loginModal');
-            modal.classList.remove('hidden');
-            setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 10);
-        }
-
-        function closeLoginModal() {
-            const modal = document.getElementById('loginModal');
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => modal.classList.add('hidden'), 200);
-        }
-
-        function openRegisterModal() {
-            const modal = document.getElementById('registerModal');
-            modal.classList.remove('hidden');
-            setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 10);
-        }
-
-        function closeRegisterModal() {
-            const modal = document.getElementById('registerModal');
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => modal.classList.add('hidden'), 200);
-        }
-
-        function openAccountSettings() {
-            toggleUserDropdown();
-            const modal = document.getElementById('accountModal');
-            modal.classList.remove('hidden');
-            setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 10);
-        }
-
-        function closeAccountSettings() {
-            const modal = document.getElementById('accountModal');
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => modal.classList.add('hidden'), 200);
-        }
-
-        // SUPABASE: สมัครสมาชิก (เช็คชื่อซ้ำ + บันทึกลง Supabase)
-        async function handleRegister(e) {
-            e.preventDefault();
-            const username = document.getElementById('regUsername').value.trim();
-            const password = document.getElementById('regPassword').value;
-
-            // เช็คว่ามีชื่อนี้ในระบบหรือยัง
-            const { data: existingUser } = await _supabase
-                .from('users')
-                .select('username')
-                .eq('username', username)
-                .single();
-
-            if (existingUser) {
-                showToast('ชื่อนี้มีคนใช้แล้ว กรุณาใช้ชื่ออื่น');
-                return;
-            }
-
-            // บันทึกข้อมูลสมาชิกใหม่ลงตาราง users
-            const { error } = await _supabase
-                .from('users')
-                .insert([{ username, password }]);
-
-            if (error) {
-                showToast('เกิดข้อผิดพลาดในการสมัครสมาชิก');
-                return;
-            }
-
-            currentUser = username;
-            localStorage.setItem('neighborhood_current_user', username);
-            updateAuthUI();
-            closeRegisterModal();
-            showToast('สมัครสมาชิกและเข้าสู่ระบบสำเร็จ');
-        }
-
-        // SUPABASE: เข้าสู่ระบบ (เช็คชื่อและรหัสผ่านจาก Supabase)
-        async function handleLogin(e) {
-            e.preventDefault();
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            const remember = document.getElementById('rememberMe').checked;
-
-            const { data: user, error } = await _supabase
-                .from('users')
-                .select('*')
-                .eq('username', username)
-                .eq('password', password)
-                .single();
-
-            if (error || !user) {
-                showToast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-                return;
-            }
-            
-            currentUser = username;
-            if (remember) {
-                localStorage.setItem('neighborhood_current_user', username);
-            } else {
-                localStorage.removeItem('neighborhood_current_user');
-            }
-
-            updateAuthUI();
-            closeLoginModal();
-            showToast('เข้าสู่ระบบสำเร็จ');
-        }
-
-        function handleLogout() {
-            currentUser = null;
-            localStorage.removeItem('neighborhood_current_user');
-            updateAuthUI();
-            toggleUserDropdown();
-            showToast('ออกจากระบบแล้ว');
-            resetView();
-        }
-
-        function openWriteModal() {
-            if (!currentUser) {
-                showToast('กรุณาเข้าสู่ระบบก่อนเขียนรีวิว');
-                openLoginModal();
-                return;
-            }
-            const modal = document.getElementById('writeModal');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                document.getElementById('writeModalCard').classList.remove('scale-95');
-                document.getElementById('writeModalCard').classList.add('scale-100');
-            }, 10);
-        }
-
-        function closeWriteModal() {
-            const modal = document.getElementById('writeModal');
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            document.getElementById('writeModalCard').classList.remove('scale-100');
-            document.getElementById('writeModalCard').classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 200);
-        }
-
-        function submitReview(e) {
-            e.preventDefault();
-            const dormName = document.getElementById('formDormName').value;
-            const location = document.getElementById('formLocation').value;
-            const title = document.getElementById('formTitle').value;
-            const content = document.getElementById('formContent').value;
-            
-            const quiet = parseInt(document.getElementById('formQuiet').value);
-            const safe = parseInt(document.getElementById('formSafe').value);
-            const food = parseInt(document.getElementById('formFood').value);
-            const flood = parseInt(document.getElementById('formFlood').value);
-
-            const overallRating = Number(((quiet + safe + food + flood) / 4).toFixed(1));
-
-            reviews.unshift({
-                id: reviews.length + 1,
-                dormName,
-                location,
-                author: currentUser,
-                date: "เมื่อสักครู่",
-                title,
-                content,
-                scores: { quiet, safe, food, flood },
-                overallRating,
-                likes: 0,
-                category: safe < 3 ? 'safe' : (quiet < 3 ? 'quiet' : 'food'),
-                comments: []
-            });
-
-            closeWriteModal();
-            document.getElementById('reviewForm').reset();
-            renderReviews();
-            showToast('โพสต์รีวิวเรียบร้อย');
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastMessage').innerText = message;
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        // ฟังก์ชันออกจากระบบ (Logout)
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            window.location.reload(); // รีเฟรชหน้าเว็บกลับมาหน้าแรก
         }
     </script>
 </body>
