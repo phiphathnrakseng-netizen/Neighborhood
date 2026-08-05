@@ -102,6 +102,9 @@
                         <button onclick="openAccountSettings()" class="w-full text-left px-4 py-2.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2">
                             <i class="fa-solid fa-user-gear"></i> ตั้งค่าบัญชี
                         </button>
+                        <button onclick="openPolicyModal()" class="w-full text-left px-4 py-2.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved"></i> กฎระเบียบและนโยบายเว็บ
+                        </button>
                         <button onclick="toggleDarkMode()" class="w-full text-left px-4 py-2.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-between">
                             <span class="flex items-center gap-2"><i class="fa-solid fa-moon"></i> โหมดมืด</span>
                             <span id="darkModeStatusText" class="text-[10px] text-zinc-400">ปิด</span>
@@ -246,6 +249,35 @@
         </div>
     </div>
 
+    <!-- MODAL: POLICY & REGULATIONS -->
+    <div id="policyModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs hidden transition-opacity opacity-0 pointer-events-none">
+        <div class="bg-white dark:bg-zinc-900 w-full max-w-2xl rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden max-h-[90vh] flex flex-col relative">
+            <div class="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                <h3 class="font-normal text-zinc-900 dark:text-white text-base">กฎระเบียบและนโยบายเว็บ</h3>
+                <button onclick="closePolicyModal()" class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 flex items-center justify-center text-zinc-500 transition-colors">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed flex-1">
+                <h4 class="font-normal text-sm text-zinc-900 dark:text-white mb-2">ข้อกำหนดการใช้งานและกฎระเบียบเว็บไซต์รีวิวหอพัก</h4>
+                <p>ยินดีต้อนรับสู่เว็บไซต์รีวิวหอพักของเรา แพลตฟอร์มนี้สร้างขึ้นเพื่อให้ข้อมูลที่โปร่งใส เป็นกลาง และเป็นประโยชน์ต่อผู้หาหอพัก รวมถึงผู้ประกอบการ เพื่อความสงบเรียบร้อยและสังคมออนไลน์ที่ดี โปรดอ่านและปฏิบัติตามกฎระเบียบด้านล่างนี้อย่างเคร่งครัด</p>
+
+                <div class="space-y-3 pt-2">
+                    <div class="font-normal text-zinc-900 dark:text-white">1. หมวดหมู่: สำหรับผู้ใช้งานทั่วไป (ผู้รีวิว และผู้หาหอพัก)</div>
+                    <div class="pl-3 space-y-2 border-l-2 border-zinc-200 dark:border-zinc-800">
+                        <div><strong class="text-zinc-900 dark:text-white">1.1 การรีวิวต้องมาจากประสบการณ์จริง:</strong> ข้อมูล รูปภาพ และความคิดเห็น ต้องมาจากประสบการณ์จริงที่เคยพักอาศัย หรือเคยเข้าเยี่ยมชมหอพักนั้นๆ เท่านั้น ห้ามสร้างรีวิวเท็จ (Fake Review) เพื่อกลั่นแกล้งโจมตีหอพัก หรืออวยหอพักของตนเอง/คนรู้จักอย่างไร้เหตุผล</div>
+                        <div><strong class="text-zinc-900 dark:text-white">1.2 การใช้ภาษาและความสุภาพ:</strong> ห้ามใช้ถ้อยคำหยาบคาย ดูหมิ่น เหยียดหยาม คุกคาม หรือใช้ภาษาที่สร้างความเกลียดชัง (Hate Speech) หลีกเลี่ยงการพาดพิงถึงบุคคลที่สาม หรือเปิดเผยข้อมูลส่วนบุคคล (Personal Identifiable Information) ของผู้อื่น เช่น ชื่อ-นามสกุลจริงของผู้ดูแลหรือเพื่อนร่วมหอพัก เบอร์โทรศัพท์ส่วนตัว หรือป้ายทะเบียนรถ</div>
+                        <div><strong class="text-zinc-900 dark:text-white">1.3 ห้ามสแปมและโฆษณาแอบแฝง:</strong> ห้ามโพสต์ข้อความซ้ำๆ (Spam) หรือโปรโมทธุรกิจ/สินค้าอื่นที่ไม่เกี่ยวข้องในช่องทางรีวิว หากพบการแปะลิงก์เพื่อการค้าหรือหาผลประโยชน์โดยไม่ได้รับอนุญาต ทีมงานจะทำการลบโพสต์ทันที</div>
+                        <div><strong class="text-zinc-900 dark:text-white">1.4 การจัดการข้อพิพาทและหลักฐาน:</strong> หากเป็นการรีวิวเชิงลบ (เช่น เรื่องเงินมัดจำ, สภาพห้อง, การบริการ) แนะนำให้แนบหลักฐานประกอบ เช่น ภาพถ่ายสภาพห้อง หรือเอกสารประกอบ เพื่อความน่าเชื่อถือและป้องกันปัญหาทางกฎหมาย</div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-zinc-200 dark:border-zinc-800 text-right">
+                <button onclick="closePolicyModal()" class="px-5 py-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs">เข้าใจแล้ว</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: WRITE REVIEW -->
     <div id="writeModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs hidden transition-opacity opacity-0 pointer-events-none">
         <div class="bg-white dark:bg-zinc-900 w-full max-w-xl rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-200" id="writeModalCard">
@@ -321,6 +353,23 @@
         </div>
     </div>
 
+    <!-- MODAL: ADMIN DELETED NOTIFICATION POPUP -->
+    <div id="adminDeletedModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs hidden transition-opacity opacity-0 pointer-events-none">
+        <div class="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 p-6 text-center relative">
+            <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/50 text-red-600 flex items-center justify-center mx-auto mb-4 text-lg">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-base font-normal text-zinc-900 dark:text-white mb-2">แจ้งเตือนจากระบบ</h3>
+            <p class="text-xs text-zinc-600 dark:text-zinc-300 mb-6 leading-relaxed">
+                ขออภัยเนื้อหาของคุณอาจเข้าข่ายผิดกฎและนโยบายการให้บริการของเว็บ กรุณากดอ่านรายละเอียดของเว็บ ได้ที่เมนูเฟือง
+            </p>
+            <div class="flex gap-2">
+                <button onclick="closeAdminDeletedModal()" class="flex-1 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs">ปิด</button>
+                <button onclick="goToPolicyFromPopup()" class="flex-1 py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs">ไปที่เมนูกฎเว็บ</button>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICATION -->
     <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-200 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs shadow-lg">
         <i class="fa-solid fa-check text-xs"></i>
@@ -335,20 +384,18 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
-        let reviews = []; // เปลี่ยนมารับข้อมูลจริงจาก Supabase Database
+        let reviews = [];
 
         let currentFilter = 'all';
         let searchQuery = '';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // เช็คสถานะการล็อกอินปัจจุบันจาก Supabase Auth
             const { data: { session } } = await _supabase.auth.getSession();
             if (session && session.user) {
                 currentUser = session.user.email;
                 updateAuthUI();
             }
 
-            // รับฟังการเปลี่ยนแปลงสถานะล็อกอินแบบเรียลไทม์
             _supabase.auth.onAuthStateChange((event, session) => {
                 if (session && session.user) {
                     currentUser = session.user.email;
@@ -363,11 +410,9 @@
                 document.getElementById('darkModeStatusText').innerText = 'เปิด';
             }
 
-            // [สำคัญ] ดึงข้อมูลจากฐานข้อมูล Supabase มาแสดงผล
             fetchReviews();
         });
 
-        // ฟังก์ชันดึงข้อมูลรีวิวทั้งหมดจาก Supabase Database
         async function fetchReviews() {
             const { data, error } = await _supabase
                 .from('reviews')
@@ -379,7 +424,6 @@
                 return;
             }
 
-            // แปลงชื่อคอลัมน์ให้ตรงกับหน้าเว็บ
             reviews = data.map(item => ({
                 id: item.id,
                 dormName: item.dorm_name,
@@ -461,8 +505,8 @@
 
             emptyState.classList.add('hidden');
             grid.innerHTML = filtered.map(rev => `
-                <div onclick="openDetailView(${rev.id})" class="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all cursor-pointer flex flex-col justify-between group">
-                    <div>
+                <div class="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all flex flex-col justify-between group">
+                    <div onclick="openDetailView(${rev.id})" class="cursor-pointer">
                         <div class="flex items-center justify-between mb-3">
                             <span class="text-xs text-zinc-500">${rev.location}</span>
                             <span class="text-xs text-zinc-900 dark:text-zinc-100 font-normal bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-full">★ ${rev.overallRating.toFixed(1)}</span>
@@ -473,11 +517,14 @@
                         <p class="text-zinc-500 dark:text-zinc-400 text-xs line-clamp-3 mb-4 leading-relaxed">${rev.content}</p>
                     </div>
                     <div class="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 cursor-pointer" onclick="openDetailView(${rev.id})">
                             <span>เงียบ ${rev.scores.quiet}/5</span>
                             <span>ปลอดภัย ${rev.scores.safe}/5</span>
                         </div>
-                        <span class="text-zinc-900 dark:text-zinc-100 flex items-center gap-1"><i class="fa-solid fa-heart text-red-500"></i> ${rev.likes}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-zinc-900 dark:text-zinc-100 flex items-center gap-1 cursor-pointer" onclick="openDetailView(${rev.id})"><i class="fa-solid fa-heart text-red-500"></i> ${rev.likes}</span>
+                            ${currentUser === 'admin@neighborhood.com' || currentUser === rev.author ? `<button onclick="deleteReviewAsAdmin(${rev.id})" class="text-red-500 hover:text-red-700 p-1" title="ลบโพสต์โดยแอดมิน"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -635,6 +682,22 @@
             }
         }
 
+        async function deleteReviewAsAdmin(id) {
+            const { error } = await _supabase
+                .from('reviews')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                showToast('เกิดข้อผิดพลาดในการลบโพสต์');
+                return;
+            }
+
+            fetchReviews();
+            resetView();
+            openAdminDeletedModal();
+        }
+
         function submitComment(e, id) {
             e.preventDefault();
             if (!currentUser) {
@@ -692,7 +755,38 @@
             setTimeout(() => modal.classList.add('hidden'), 200);
         }
 
-        // SUPABASE AUTH: สมัครสมาชิกด้วย Email & Password
+        function openPolicyModal() {
+            toggleUserDropdown();
+            const modal = document.getElementById('policyModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 10);
+        }
+
+        function closePolicyModal() {
+            const modal = document.getElementById('policyModal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        function openAdminDeletedModal() {
+            const modal = document.getElementById('adminDeletedModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 10);
+        }
+
+        function closeAdminDeletedModal() {
+            const modal = document.getElementById('adminDeletedModal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        function goToPolicyFromPopup() {
+            closeAdminDeletedModal();
+            const modal = document.getElementById('policyModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0', 'pointer-events-none'), 10);
+        }
+
         async function handleRegister(e) {
             e.preventDefault();
             const email = document.getElementById('regEmail').value.trim();
@@ -709,10 +803,10 @@
             }
 
             closeRegisterModal();
-            showToast('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
+            showToast('สมัครสมาชิกสำเร็จ!');
+            openPolicyModal();
         }
 
-        // SUPABASE AUTH: เข้าสู่ระบบด้วย Email & Password
         async function handleLogin(e) {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim();
@@ -734,7 +828,6 @@
             showToast('เข้าสู่ระบบสำเร็จ');
         }
 
-        // SUPABASE AUTH: ออกจากระบบ
         async function handleLogout() {
             await _supabase.auth.signOut();
             currentUser = null;
@@ -767,7 +860,6 @@
             setTimeout(() => modal.classList.add('hidden'), 200);
         }
 
-        // SUPABASE: บันทึกรีวิวลงฐานข้อมูลจริง
         async function submitReview(e) {
             e.preventDefault();
             if (!currentUser) {
@@ -813,8 +905,6 @@
             closeWriteModal();
             document.getElementById('reviewForm').reset();
             showToast('โพสต์รีวิวเรียบร้อย');
-            
-            // โหลดข้อมูลรีวิวใหม่ล่าสุดจากฐานข้อมูลมาแสดงทันที
             fetchReviews();
         }
 
