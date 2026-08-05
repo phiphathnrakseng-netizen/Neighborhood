@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Michroma & TH Sarabun PSK -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
@@ -16,6 +16,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap');
     </style>
     
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -55,12 +58,10 @@
     <!-- TOP NAVIGATION BAR -->
     <header class="sticky top-0 z-40 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-200">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <!-- Brand Logo -->
             <div class="flex items-center gap-3 cursor-pointer" onclick="resetView()">
                 <span class="logo-text text-xl font-bold tracking-wider text-zinc-900 dark:text-white">Neighborhood</span>
             </div>
 
-            <!-- Search Bar (Header - Compact) -->
             <div class="hidden md:flex items-center flex-1 max-w-sm mx-8">
                 <div class="relative w-full">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-zinc-400">
@@ -70,7 +71,6 @@
                 </div>
             </div>
 
-            <!-- Action Buttons / User Menu -->
             <div class="flex items-center gap-3">
                 <button onclick="openWriteModal()" class="hidden sm:inline-flex items-center gap-2 px-5 py-2 rounded-full bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-normal text-sm transition-all">
                     <i class="fa-solid fa-plus text-xs"></i>
@@ -87,14 +87,13 @@
                     </button>
                 </div>
 
-                <!-- Logged In State (Hidden by default) -->
+                <!-- Logged In State -->
                 <div id="authUserMenu" class="relative hidden">
                     <button onclick="toggleUserDropdown()" class="flex items-center gap-2 p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors">
                         <div class="w-8 h-8 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center text-xs font-bold" id="userAvatarText">U</div>
                         <i class="fa-solid fa-gear text-xs text-zinc-500 px-1"></i>
                     </button>
 
-                    <!-- Dropdown Settings Menu -->
                     <div id="userDropdown" class="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl py-2 hidden z-50">
                         <div class="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800">
                             <p class="text-xs text-zinc-400">เข้าสู่ระบบในชื่อ</p>
@@ -130,7 +129,6 @@
                     เสียงรบกวนยามค่ำคืน ความปลอดภัย และบรรยากาศรอบหอพักจากผู้เช่าตัวจริง
                 </p>
 
-                <!-- Big Search Box -->
                 <div class="bg-white dark:bg-zinc-900 p-2 rounded-full max-w-xl mx-auto flex items-center gap-2 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors">
                     <div class="relative flex-1 pl-4">
                         <input type="text" id="heroSearchInput" oninput="handleSearch(this.value)" placeholder="พิมพ์ชื่อย่าน หรือหอพักที่ต้องการเช็ค..." class="w-full py-2.5 bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 text-sm focus:outline-none">
@@ -149,32 +147,18 @@
                 <span id="activeFilterLabel" class="text-xs text-zinc-900 dark:text-zinc-100 font-normal border-b border-zinc-900 dark:border-zinc-100 pb-0.5">ทั้งหมด</span>
             </div>
             <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                <button onclick="filterCategory('all')" class="cat-btn active flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 whitespace-nowrap">
-                    ทั้งหมด
-                </button>
-                <button onclick="filterCategory('quiet')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">
-                    เงียบสงบ
-                </button>
-                <button onclick="filterCategory('safe')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">
-                    ปลอดภัยยามค่ำคืน
-                </button>
-                <button onclick="filterCategory('food')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">
-                    ของกินเพียบ
-                </button>
-                <button onclick="filterCategory('flood')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">
-                    ไม่น้ำท่วมขัง
-                </button>
+                <button onclick="filterCategory('all')" class="cat-btn active flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 whitespace-nowrap">ทั้งหมด</button>
+                <button onclick="filterCategory('quiet')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">เงียบสงบ</button>
+                <button onclick="filterCategory('safe')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">ปลอดภัยยามค่ำคืน</button>
+                <button onclick="filterCategory('food')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">ของกินเพียบ</button>
+                <button onclick="filterCategory('flood')" class="cat-btn flex items-center gap-2 px-4 py-2 rounded-full text-xs transition-all bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 whitespace-nowrap">ไม่น้ำท่วมขัง</button>
             </div>
         </section>
 
         <!-- DYNAMIC CONTENT AREA -->
         <div id="mainContentArea">
-            <!-- REVIEW CARDS GRID -->
-            <div id="reviewsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Data injected via JS -->
-            </div>
+            <div id="reviewsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             
-            <!-- Empty State -->
             <div id="emptyState" class="hidden text-center py-20">
                 <h3 class="text-base font-normal text-zinc-900 dark:text-white mb-1">ไม่พบข้อมูลรีวิว</h3>
                 <p class="text-sm text-zinc-500 mb-6">ลองเปลี่ยนคำค้นหา หรือเขียนรีวิวแชร์ข้อมูลเป็นคนแรก</p>
@@ -182,7 +166,6 @@
             </div>
         </div>
 
-        <!-- DETAIL VIEW CONTAINER -->
         <div id="detailViewContainer" class="hidden"></div>
 
     </main>
@@ -290,7 +273,6 @@
                         </div>
                     </div>
 
-                    <!-- Ratings -->
                     <div class="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-3">
                         <h4 class="text-xs text-zinc-500 uppercase tracking-wider">ให้คะแนนเฉพาะด้าน (1 - 5)</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -352,14 +334,12 @@
 
     <!-- JAVASCRIPT APPLICATION LOGIC -->
     <script>
-        let currentUser = null;
+        // เชื่อมต่อ Supabase
+        const SUPABASE_URL = 'https://znpjtnfdbufismuwetsp.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_X-h6wtFrGpuHWif1v5xMHw_ewkgeSNg';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Mock Database สำหรับเก็บข้อมูลผู้ใช้งานที่สมัคร (ชื่อ -> รหัสผ่าน)
-        let registeredUsers = JSON.parse(localStorage.getItem('neighborhood_users_db')) || {
-            "คุณนัน": "1234",
-            "คุณธนา": "1234",
-            "คุณมิント": "1234"
-        };
+        let currentUser = null;
 
         let reviews = [
             {
@@ -373,7 +353,6 @@
                 scores: { quiet: 4, safe: 3, food: 4, flood: 3 },
                 overallRating: 3.8,
                 likes: 24,
-                likedBy: [],
                 category: "safe",
                 comments: [
                     { author: "คุณธนา", text: "ดึกๆ หมาจรจัดแถวนั้นเยอะด้วยครับ ต้องระวัง", date: "10 ชม. ที่แล้ว" }
@@ -390,23 +369,7 @@
                 scores: { quiet: 2, safe: 5, food: 5, flood: 4 },
                 overallRating: 4.0,
                 likes: 52,
-                likedBy: [],
                 category: "food",
-                comments: []
-            },
-            {
-                id: 3,
-                dormName: "Baan Suan Bangkhen",
-                location: "งามวงศ์วาน (ม.เกษตร)",
-                author: "คุณมิント",
-                date: "สัปดาห์ที่แล้ว",
-                title: "เงียบสงบ หลับสบาย ใกล้ม.เกษตร",
-                content: "ประทับใจความเงียบ เหมาะกับคนอ่านหนังสือหรือ WFH ไม่มีเสียงปาร์ตี้รบกวนยามดึก ซอยน้ำไม่ท่วม เดินทางสะดวก",
-                scores: { quiet: 5, safe: 4, food: 5, flood: 4 },
-                overallRating: 4.5,
-                likes: 78,
-                likedBy: [],
-                category: "quiet",
                 comments: []
             }
         ];
@@ -415,14 +378,12 @@
         let searchQuery = '';
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Check LocalStorage for saved user session
             const savedUser = localStorage.getItem('neighborhood_current_user');
             if (savedUser) {
                 currentUser = savedUser;
                 updateAuthUI();
             }
             
-            // Check Dark Mode preference
             if (localStorage.getItem('neighborhood_dark') === 'true') {
                 document.documentElement.classList.add('dark');
                 document.getElementById('darkModeStatusText').innerText = 'เปิด';
@@ -451,7 +412,6 @@
             dropdown.classList.toggle('hidden');
         }
 
-        // Close dropdown when clicking outside
         window.addEventListener('click', (e) => {
             const dropdown = document.getElementById('userDropdown');
             if (!dropdown.contains(e.target) && !e.target.closest('#authUserMenu')) {
@@ -711,19 +671,57 @@
             setTimeout(() => modal.classList.add('hidden'), 200);
         }
 
-        function handleLogin(e) {
+        // SUPABASE: สมัครสมาชิก (เช็คชื่อซ้ำ + บันทึกลง Supabase)
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+
+            // เช็คว่ามีชื่อนี้ในระบบหรือยัง
+            const { data: existingUser } = await _supabase
+                .from('users')
+                .select('username')
+                .eq('username', username)
+                .single();
+
+            if (existingUser) {
+                showToast('ชื่อนี้มีคนใช้แล้ว กรุณาใช้ชื่ออื่น');
+                return;
+            }
+
+            // บันทึกข้อมูลสมาชิกใหม่ลงตาราง users
+            const { error } = await _supabase
+                .from('users')
+                .insert([{ username, password }]);
+
+            if (error) {
+                showToast('เกิดข้อผิดพลาดในการสมัครสมาชิก');
+                return;
+            }
+
+            currentUser = username;
+            localStorage.setItem('neighborhood_current_user', username);
+            updateAuthUI();
+            closeRegisterModal();
+            showToast('สมัครสมาชิกและเข้าสู่ระบบสำเร็จ');
+        }
+
+        // SUPABASE: เข้าสู่ระบบ (เช็คชื่อและรหัสผ่านจาก Supabase)
+        async function handleLogin(e) {
             e.preventDefault();
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
             const remember = document.getElementById('rememberMe').checked;
 
-            if (!registeredUsers[username]) {
-                showToast('ไม่พบชื่อผู้ใช้นี้ กรุณาสมัครสมาชิก');
-                return;
-            }
+            const { data: user, error } = await _supabase
+                .from('users')
+                .select('*')
+                .eq('username', username)
+                .eq('password', password)
+                .single();
 
-            if (registeredUsers[username] !== password) {
-                showToast('รหัสผ่านไม่ถูกต้อง');
+            if (error || !user) {
+                showToast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
                 return;
             }
             
@@ -737,28 +735,6 @@
             updateAuthUI();
             closeLoginModal();
             showToast('เข้าสู่ระบบสำเร็จ');
-        }
-
-        function handleRegister(e) {
-            e.preventDefault();
-            const username = document.getElementById('regUsername').value.trim();
-            const password = document.getElementById('regPassword').value;
-
-            if (registeredUsers[username]) {
-                showToast('ชื่อนี้มีคนใช้แล้ว กรุณาใช้ชื่ออื่น');
-                return;
-            }
-
-            // บันทึกชื่อและรหัสลงฐานข้อมูลจำลอง
-            registeredUsers[username] = password;
-            localStorage.setItem('neighborhood_users_db', JSON.stringify(registeredUsers));
-
-            currentUser = username;
-            localStorage.setItem('neighborhood_current_user', username);
-
-            updateAuthUI();
-            closeRegisterModal();
-            showToast('สมัครสมาชิกและเข้าสู่ระบบสำเร็จ');
         }
 
         function handleLogout() {
