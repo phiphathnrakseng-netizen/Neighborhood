@@ -190,17 +190,12 @@
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-3">
                 <div>
-                    <label class="block text-xs text-zinc-500 mb-1">ชื่อผู้ใช้งาน</label>
-                    <input type="text" id="loginUsername" required placeholder="กรอกชื่อผู้ใช้ของคุณ" class="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
+                    <label class="block text-xs text-zinc-500 mb-1">อีเมล</label>
+                    <input type="email" id="loginEmail" required placeholder="name@example.com" class="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
                 </div>
                 <div>
                     <label class="block text-xs text-zinc-500 mb-1">รหัสผ่าน</label>
                     <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
-                </div>
-                <div class="flex items-center justify-between text-xs pt-1">
-                    <label class="flex items-center gap-2 cursor-pointer text-zinc-500">
-                        <input type="checkbox" id="rememberMe" class="accent-zinc-900 rounded"> จดจำข้อมูลผู้ใช้
-                    </label>
                 </div>
                 <button type="submit" class="w-full py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-sm mt-2 transition-all">เข้าสู่ระบบ</button>
             </form>
@@ -215,15 +210,15 @@
             </button>
             <div class="text-center mb-6">
                 <h3 class="text-base font-normal text-zinc-900 dark:text-white">สมัครสมาชิก</h3>
-                <p class="text-xs text-zinc-500 mt-1">ใช้ชื่อและรหัสผ่านเพื่อเริ่มต้นใช้งาน</p>
+                <p class="text-xs text-zinc-500 mt-1">ใช้อีเมลและรหัสผ่านเพื่อเริ่มต้นใช้งาน</p>
             </div>
             <form onsubmit="handleRegister(event)" class="space-y-3">
                 <div>
-                    <label class="block text-xs text-zinc-500 mb-1">ชื่อผู้ใช้งาน</label>
-                    <input type="text" id="regUsername" required placeholder="ตั้งชื่อผู้ใช้ของคุณ" class="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
+                    <label class="block text-xs text-zinc-500 mb-1">อีเมล</label>
+                    <input type="email" id="regEmail" required placeholder="name@example.com" class="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
                 </div>
                 <div>
-                    <label class="block text-xs text-zinc-500 mb-1">รหัสผ่าน</label>
+                    <label class="block text-xs text-zinc-500 mb-1">รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label>
                     <input type="password" id="regPassword" required placeholder="••••••••" class="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100">
                 </div>
                 <button type="submit" class="w-full py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-sm mt-2 transition-all">สมัครสมาชิก</button>
@@ -243,8 +238,8 @@
             </div>
             <div class="space-y-4 text-xs">
                 <div>
-                    <span class="text-zinc-400 block mb-1">ชื่อผู้ใช้งานปัจจุบัน</span>
-                    <p id="accountNameDisplay" class="font-medium text-zinc-900 dark:text-zinc-100 p-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700"></p>
+                    <span class="text-zinc-400 block mb-1">อีเมลบัญชีปัจจุบัน</span>
+                    <p id="accountNameDisplay" class="font-medium text-zinc-900 dark:text-zinc-100 p-2.5 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 truncate"></p>
                 </div>
                 <button onclick="closeAccountSettings()" class="w-full py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs">ปิด</button>
             </div>
@@ -346,7 +341,7 @@
                 id: 1,
                 dormName: "The Park Ladprao 15",
                 location: "ลาดพร้าว 15",
-                author: "คุณนัน",
+                author: "nant@example.com",
                 date: "เมื่อวานนี้",
                 title: "ซอยเปลี่ยวตอนดึก มีวินหน้าปากซอยช่วยชีวิต",
                 content: "ห้องตรงปกตามรูป แต่รอบนอกช่วงหลังเที่ยงคืนซอยค่อนข้างมืดและเปลี่ยว ร้านค้าปิดหมด มีแค่เซเว่นหน้าปากซอย ห้องเก็บเสียงค่อนข้างดี ไม่ค่อยได้ยินห้องข้างๆ",
@@ -355,14 +350,14 @@
                 likes: 24,
                 category: "safe",
                 comments: [
-                    { author: "คุณธนา", text: "ดึกๆ หมาจรจัดแถวนั้นเยอะด้วยครับ ต้องระวัง", date: "10 ชม. ที่แล้ว" }
+                    { author: "thana@example.com", text: "ดึกๆ หมาจรจัดแถวนั้นเยอะด้วยครับ ต้องระวัง", date: "10 ชม. ที่แล้ว" }
                 ]
             },
             {
                 id: 2,
                 dormName: "Ideo Mobi Asoke",
                 location: "อโศก-เพชรบุรี",
-                author: "คุณธนา",
+                author: "thana@example.com",
                 date: "3 วันที่แล้ว",
                 title: "ของกินอุดมสมบูรณ์ แต่เสียงรถไฟฟ้าดังนิดหน่อย",
                 content: "รอบมหา'ลัยของกินอร่อย เดินทางสะดวกสุดๆ แต่ฝั่งติดถนนใหญ่จะได้ยินเสียงรถไฟฟ้าและรถติดช่วงเร่งด่วน น้ำระบายไว ฝนตกหนักไม่ขังนาน",
@@ -377,12 +372,23 @@
         let currentFilter = 'all';
         let searchQuery = '';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('neighborhood_current_user');
-            if (savedUser) {
-                currentUser = savedUser;
+        document.addEventListener('DOMContentLoaded', async () => {
+            // เช็คสถานะการล็อกอินปัจจุบันจาก Supabase Auth
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session && session.user) {
+                currentUser = session.user.email;
                 updateAuthUI();
             }
+
+            // รับฟังการเปลี่ยนแปลงสถานะล็อกอินแบบเรียลไทม์
+            _supabase.auth.onAuthStateChange((event, session) => {
+                if (session && session.user) {
+                    currentUser = session.user.email;
+                } else {
+                    currentUser = null;
+                }
+                updateAuthUI();
+            });
             
             if (localStorage.getItem('neighborhood_dark') === 'true') {
                 document.documentElement.classList.add('dark');
@@ -671,75 +677,52 @@
             setTimeout(() => modal.classList.add('hidden'), 200);
         }
 
-        // SUPABASE: สมัครสมาชิก (เช็คชื่อซ้ำ + บันทึกลง Supabase)
+        // SUPABASE AUTH: สมัครสมาชิกด้วย Email & Password
         async function handleRegister(e) {
             e.preventDefault();
-            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
 
-            // เช็คว่ามีชื่อนี้ในระบบหรือยัง
-            const { data: existingUser } = await _supabase
-                .from('users')
-                .select('username')
-                .eq('username', username)
-                .single();
-
-            if (existingUser) {
-                showToast('ชื่อนี้มีคนใช้แล้ว กรุณาใช้ชื่ออื่น');
-                return;
-            }
-
-            // บันทึกข้อมูลสมาชิกใหม่ลงตาราง users
-            const { error } = await _supabase
-                .from('users')
-                .insert([{ username, password }]);
+            const { data, error } = await _supabase.auth.signUp({
+                email: email,
+                password: password,
+            });
 
             if (error) {
-                showToast('เกิดข้อผิดพลาดในการสมัครสมาชิก');
+                showToast('เกิดข้อผิดพลาด: ' + error.message);
                 return;
             }
 
-            currentUser = username;
-            localStorage.setItem('neighborhood_current_user', username);
-            updateAuthUI();
             closeRegisterModal();
-            showToast('สมัครสมาชิกและเข้าสู่ระบบสำเร็จ');
+            showToast('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
         }
 
-        // SUPABASE: เข้าสู่ระบบ (เช็คชื่อและรหัสผ่านจาก Supabase)
+        // SUPABASE AUTH: เข้าสู่ระบบด้วย Email & Password
         async function handleLogin(e) {
             e.preventDefault();
-            const username = document.getElementById('loginUsername').value.trim();
+            const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
-            const remember = document.getElementById('rememberMe').checked;
 
-            const { data: user, error } = await _supabase
-                .from('users')
-                .select('*')
-                .eq('username', username)
-                .eq('password', password)
-                .single();
+            const { data, error } = await _supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
 
-            if (error || !user) {
-                showToast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+            if (error) {
+                showToast('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
                 return;
             }
             
-            currentUser = username;
-            if (remember) {
-                localStorage.setItem('neighborhood_current_user', username);
-            } else {
-                localStorage.removeItem('neighborhood_current_user');
-            }
-
+            currentUser = data.user.email;
             updateAuthUI();
             closeLoginModal();
             showToast('เข้าสู่ระบบสำเร็จ');
         }
 
-        function handleLogout() {
+        // SUPABASE AUTH: ออกจากระบบ
+        async function handleLogout() {
+            await _supabase.auth.signOut();
             currentUser = null;
-            localStorage.removeItem('neighborhood_current_user');
             updateAuthUI();
             toggleUserDropdown();
             showToast('ออกจากระบบแล้ว');
